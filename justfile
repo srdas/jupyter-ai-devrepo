@@ -5,10 +5,58 @@ set dotenv-load
 # Global recipes that work anywhere under this devrepo
 
 sync *args:
-    uv sync {{args}}
+    #!/usr/bin/env bash
+    refresh_flags=$(sed -n '/\[tool.uv.sources\]/,/^\[/p' pyproject.toml \
+        | grep 'workspace = true' \
+        | sed 's/ =.*//' \
+        | xargs -I{} echo --refresh-package {})
+    uv sync $refresh_flags {{args}}
 
 sync-all *args:
     uv sync --extra optional {{args}}
+
+mainline +args:
+    #!/usr/bin/env bash
+    submodules=$(git submodule foreach -q 'echo $sm_path')
+    args=({{args}})
+    if [[ "${args[0]}" != "all" ]]; then
+        # Syntax: just mainline <submodule> [<submodule>...]
+        for mod in "${args[@]}"; do
+            echo "$submodules" | grep -qx "$mod" || { echo "Error: '$mod' is not a submodule" >&2; exit 1; }
+        done
+        just _mainline-run "${args[@]}"
+    elif [[ ${#args[@]} -eq 1 ]]; then
+        # Syntax: just mainline all
+        just _mainline-run $submodules
+    elif [[ ${#args[@]} -ge 3 && "${args[1]}" == "-x" ]]; then
+        # Syntax: just mainline all -x <submodule> [<submodule>...]
+        excludes=("${args[@]:2}")
+        for ex in "${excludes[@]}"; do
+            echo "$submodules" | grep -qx "$ex" || { echo "Error: '$ex' is not a submodule" >&2; exit 1; }
+        done
+        modules=()
+        for mod in $submodules; do
+            skip=false
+            for ex in "${excludes[@]}"; do [[ "$mod" == "$ex" ]] && skip=true; done
+            $skip || modules+=("$mod")
+        done
+        just _mainline-run "${modules[@]}"
+    else
+        echo "Usage:" >&2
+        echo "  just mainline <submodule> [<submodule>...]" >&2
+        echo "  just mainline all" >&2
+        echo "  just mainline all -x <submodule> [<submodule>...]" >&2
+        exit 1
+    fi
+
+# Internal: switches each module to main and pulls
+_mainline-run +modules:
+    #!/usr/bin/env bash
+    for mod in {{modules}}; do
+        echo "Resetting $mod to origin/main..."
+        git -C "$mod" switch main -q && git -C "$mod" pull -q
+    done
+    echo "Done. You may need to run: just sync"
 
 pull-all:
     git submodule foreach -q 'echo $sm_path' | xargs -P 100 -I{} sh -c 'cd {} && git switch main -q && git pull -q'

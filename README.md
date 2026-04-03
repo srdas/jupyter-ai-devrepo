@@ -95,13 +95,14 @@ available. This also requires restarting the JupyterLab server.
 
 - `just clean`: remove all `*.{chat,ipynb}` files from the top-level directory
 
-- `just sync`: run `uv sync`
+- `just sync`: run `uv sync`, automatically refreshing the cache for all
+  workspace members
 
   - Required when adding/removing any dependencies to this devrepo or its
   submodules. This is run automatically by all `uv` commands so it is usually
   not necessary.
 
-  - Pass `--refresh` if `uv sync` fails with: "No solution found when resolving
+  - Pass `--refresh` if `just sync` fails with: "No solution found when resolving
   dependencies for split — we can conclude that your workspace's requirements
   are unsatisfiable."
 
@@ -114,6 +115,14 @@ available. This also requires restarting the JupyterLab server.
   - Also accepts extra flags, e.g. `just sync-all --refresh`.
 
 - `just pull-all`: switch to `main` in all submodules and pull in all upstream changes
+
+- `just mainline <submodule> [<submodule>...]`: switch specific submodules to
+  `main` and pull. Validates that each argument is a real submodule.
+
+  - `just mainline all`: mainline every submodule (same as `just pull-all`)
+
+  - `just mainline all -x <submodule> [<submodule>...]`: mainline every
+    submodule except the ones listed
 
 - `just build-all`: build all frontend assets in every submodule
 
