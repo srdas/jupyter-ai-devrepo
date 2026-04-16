@@ -58,6 +58,7 @@ just lint       # run linters
 
 In the following two places. 
 
+```toml
 [project.optional-dependencies]
 optional = [
     "jupyter_ai_litellm",
@@ -65,7 +66,9 @@ optional = [
     "jupyter_ai_magic_commands",
     "jupyter_ai_quickagent",
 ]
+```
 
+```toml
 [tool.uv.sources]
 jupyter_ai = { workspace = true }
 jupyter_server_documents = { workspace = true }
@@ -81,3 +84,4 @@ jupyter_ai_acp_client = { workspace = true }
 jupyter_server_mcp = { workspace = true }
 jupyter_ai_tools = { workspace = true }
 jupyter_ai_quickagent = { workspace = true }
+```
