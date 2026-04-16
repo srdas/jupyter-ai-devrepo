@@ -3,7 +3,7 @@ requires = ["hatchling>=1.5.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "jupyter_ai_deepagent"
+name = "jupyter_ai_quickagent"
 version = "0.1.0"
 description = "A Jupyter AI persona that implements LangChain Deep Agents with interactive agent configuration"
 readme = "README.md"
@@ -46,12 +46,12 @@ test = [
 exclude = [".github"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["jupyter_ai_deepagent"]
+packages = ["jupyter_ai_quickagent"]
 
 ###############################################################################
-# Provide DeepAgent on the personas entry point to `jupyter_ai_persona_manager`.
+# Provide QuickAgent on the personas entry point to `jupyter_ai_persona_manager`.
 # See: https://packaging.python.org/en/latest/specifications/entry-points/
 
 [project.entry-points."jupyter_ai.personas"]
-deepagent = "jupyter_ai_deepagent.deepagent_persona:DeepAgentPersona"
+quickagent = "jupyter_ai_quickagent.quickagent_persona:QuickAgentPersona"
 ###############################################################################

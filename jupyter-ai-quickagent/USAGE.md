@@ -1,13 +1,13 @@
-# DeepAgent for Jupyter AI — Usage Guide
+# QuickAgent for Jupyter AI — Usage Guide
 
 ## Overview
 
-**DeepAgent** is a Jupyter AI persona that lets you interactively create, configure, and run autonomous agents powered by [LangChain Deep Agents](https://github.com/langchain-ai/deepagents). Each agent can have its own tools and search capabilities. Agents are saved to disk so you can reuse them across sessions.
+**QuickAgent** is a Jupyter AI persona that lets you interactively create, configure, and run autonomous agents powered by [LangChain Deep Agents](https://github.com/langchain-ai/deepagents). Each agent can have its own tools and search capabilities. Agents are saved to disk so you can reuse them across sessions.
 
 ## Prerequisites
 
-1. **Jupyter AI devrepo** set up and running (`just install-all && just start`), or a standalone JupyterLab environment with `jupyter_ai_deepagent` installed.
-2. **A chat model configured in Jupyter AI settings.** Open **Settings > AI Settings** in JupyterLab and select a model (e.g., `anthropic/claude-sonnet-4-20250514`, `openai/gpt-4o`). DeepAgent shares this model with Jupyternaut via LiteLLM — no separate API keys or environment variables are needed for the LLM.
+1. **Jupyter AI devrepo** set up and running (`just install-all && just start`), or a standalone JupyterLab environment with `jupyter_ai_quickagent` installed.
+2. **A chat model configured in Jupyter AI settings.** Open **Settings > AI Settings** in JupyterLab and select a model (e.g., `anthropic/claude-sonnet-4-20250514`, `openai/gpt-4o`). QuickAgent shares this model with Jupyternaut via LiteLLM — no separate API keys or environment variables are needed for the LLM.
 3. **(Optional)** For Tavily web search, set the API key as an environment variable before starting JupyterLab:
    ```bash
    export TAVILY_API_KEY="tvly-..."
@@ -20,33 +20,33 @@
 
 In JupyterLab, open the Jupyter AI chat panel from the left sidebar.
 
-### 2. Mention DeepAgent
+### 2. Mention QuickAgent
 
-Type `@DeepAgent` in the chat to interact with the DeepAgent persona. On first use, you'll see a help menu with available commands.
+Type `@QuickAgent` in the chat to interact with the QuickAgent persona. On first use, you'll see a help menu with available commands.
 
 ### 3. Create Your First Agent
 
-Send `@DeepAgent create` and follow the interactive prompts:
+Send `@QuickAgent create` and follow the interactive prompts:
 
 #### Step 1 — Name Your Agent
 ```
-@DeepAgent create
+@QuickAgent create
 ```
-> DeepAgent: What would you like to name your agent?
+> QuickAgent: What would you like to name your agent?
 
 ```
-@DeepAgent Research Assistant
+@QuickAgent Research Assistant
 ```
 
 #### Step 2 — Define Its Purpose
-> DeepAgent: What should this agent do?
+> QuickAgent: What should this agent do?
 
 ```
-@DeepAgent Research topics on the web and write comprehensive summaries with citations
+@QuickAgent Research topics on the web and write comprehensive summaries with citations
 ```
 
 #### Step 3 — Select Tools
-> DeepAgent: Which tools should your agent have?
+> QuickAgent: Which tools should your agent have?
 
 Available tools:
 
@@ -63,14 +63,14 @@ Available tools:
 | `todo` | Create and manage a task/todo list |
 
 ```
-@DeepAgent default
+@QuickAgent default
 ```
 This selects: `execute, read_file, write_file, edit_file, ls, grep`
 
 You can also type `all`, `none`, or a comma-separated list like `execute, read_file, python_repl`.
 
 #### Step 4 — Select Search Tools
-> DeepAgent: Which search tools should your agent use?
+> QuickAgent: Which search tools should your agent use?
 
 Available search tools:
 
@@ -83,40 +83,40 @@ Available search tools:
 | `pubmed` | Biomedical literature | None |
 
 ```
-@DeepAgent duckduckgo_search, wikipedia
+@QuickAgent duckduckgo_search, wikipedia
 ```
 
 #### Step 5 — Confirm
-> DeepAgent: Review your configuration... Type `yes` to save.
+> QuickAgent: Review your configuration... Type `yes` to save.
 
 ```
-@DeepAgent yes
+@QuickAgent yes
 ```
 
 Your agent is saved and immediately activated!
 
 ## Commands Reference
 
-All commands are sent as chat messages to `@DeepAgent`:
+All commands are sent as chat messages to `@QuickAgent`:
 
 | Message | Description |
 |---------|-------------|
-| `@DeepAgent create` | Start the interactive agent creation wizard |
-| `@DeepAgent list` | List all saved agents with their configurations |
-| `@DeepAgent use <name>` | Activate a saved agent for the current conversation |
-| `@DeepAgent run <name>` | Run a saved agent |
-| `@DeepAgent info <name>` | Show detailed configuration for an agent |
-| `@DeepAgent delete <name>` | Delete a saved agent |
-| `@DeepAgent help` | Show the help menu |
+| `@QuickAgent create` | Start the interactive agent creation wizard |
+| `@QuickAgent list` | List all saved agents with their configurations |
+| `@QuickAgent use <name>` | Activate a saved agent for the current conversation |
+| `@QuickAgent run <name>` | Run a saved agent |
+| `@QuickAgent info <name>` | Show detailed configuration for an agent |
+| `@QuickAgent delete <name>` | Delete a saved agent |
+| `@QuickAgent help` | Show the help menu |
 
-**Note:** Commands are plain keywords after the `@DeepAgent` mention, not slash commands. Messages starting with `/` are intercepted by the Jupyter AI router and will not reach the persona.
+**Note:** Commands are plain keywords after the `@QuickAgent` mention, not slash commands. Messages starting with `/` are intercepted by the Jupyter AI router and will not reach the persona.
 
 ## Using a Saved Agent
 
-Once an agent is activated (via creation or `@DeepAgent use <name>`), simply send messages and DeepAgent will process them using the configured agent:
+Once an agent is activated (via creation or `@QuickAgent use <name>`), simply send messages and QuickAgent will process them using the configured agent:
 
 ```
-@DeepAgent What are the latest advances in quantum computing?
+@QuickAgent What are the latest advances in quantum computing?
 ```
 
 The agent will:
@@ -126,14 +126,14 @@ The agent will:
 
 ## How LLM Authentication Works
 
-DeepAgent does **not** require its own API keys. It reads the model and credentials from the same configuration that Jupyternaut uses, which is managed through **Settings > AI Settings** in JupyterLab.
+QuickAgent does **not** require its own API keys. It reads the model and credentials from the same configuration that Jupyternaut uses, which is managed through **Settings > AI Settings** in JupyterLab.
 
-Under the hood, this uses [LiteLLM](https://docs.litellm.ai/) via the `ChatLiteLLM` wrapper from `jupyter_ai_jupyternaut`. Any provider that Jupyternaut supports (OpenAI, Anthropic, Azure, Google, AWS Bedrock, etc.) works automatically with DeepAgent.
+Under the hood, this uses [LiteLLM](https://docs.litellm.ai/) via the `ChatLiteLLM` wrapper from `jupyter_ai_jupyternaut`. Any provider that Jupyternaut supports (OpenAI, Anthropic, Azure, Google, AWS Bedrock, etc.) works automatically with QuickAgent.
 
 **To configure:**
 1. Open **Settings > AI Settings** in JupyterLab
 2. Select a chat model and enter the API key for your provider
-3. DeepAgent will use this model for all agents
+3. QuickAgent will use this model for all agents
 
 ## Example Agents
 
@@ -157,13 +157,13 @@ Under the hood, this uses [LiteLLM](https://docs.litellm.ai/) via the `ChatLiteL
 - **Tools:** `all`
 - **Search:** `duckduckgo_search`
 
-A sample agent config is included at `jupyter_ai_deepagent/examples/research_agent.json`.
+A sample agent config is included at `jupyter_ai_quickagent/examples/research_agent.json`.
 
 ## Where Are Agents Stored?
 
 Agent configurations are saved as JSON files in:
 ```
-~/.local/share/jupyter/jupyter_ai/deepagents/
+~/.local/share/jupyter/jupyter_ai/quickagents/
 ```
 
 Each agent is a single `.json` file (e.g., `research_assistant.json`) containing:
@@ -182,10 +182,10 @@ You can edit these files manually if needed. The `system_prompt` field is reserv
 ## Troubleshooting
 
 ### "Jupyternaut config manager not found"
-Make sure `jupyter_ai_jupyternaut` is installed and its server extension is enabled. This package provides the model configuration that DeepAgent relies on.
+Make sure `jupyter_ai_jupyternaut` is installed and its server extension is enabled. This package provides the model configuration that QuickAgent relies on.
 
 ### "No chat model is configured"
-Open **Settings > AI Settings** in JupyterLab and select a chat model. DeepAgent cannot run without one.
+Open **Settings > AI Settings** in JupyterLab and select a chat model. QuickAgent cannot run without one.
 
 ### "Missing dependency" error
 Install the core packages:
@@ -194,7 +194,7 @@ pip install deepagents jupyter_ai_jupyternaut
 ```
 
 ### Search tool not initializing
-- **DuckDuckGo:** Requires the `ddgs` package (installed automatically with `jupyter_ai_deepagent`).
+- **DuckDuckGo:** Requires the `ddgs` package (installed automatically with `jupyter_ai_quickagent`).
 - **Tavily:** Requires `tavily-python` and a `TAVILY_API_KEY` environment variable. Install with:
   ```bash
   pip install tavily-python
@@ -207,12 +207,12 @@ pip install deepagents jupyter_ai_jupyternaut
 ### Agent not responding
 Check that:
 1. A chat model is configured in **Settings > AI Settings**
-2. You are using `@DeepAgent` (not a `/` slash command) before your message
+2. You are using `@QuickAgent` (not a `/` slash command) before your message
 3. The `deepagents` package is installed
 
 ### Resetting an agent
 Delete and recreate:
 ```
-@DeepAgent delete Research Assistant
-@DeepAgent create
+@QuickAgent delete Research Assistant
+@QuickAgent create
 ```

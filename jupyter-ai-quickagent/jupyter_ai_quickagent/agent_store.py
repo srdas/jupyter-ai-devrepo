@@ -1,4 +1,4 @@
-"""Persistent storage for saved deep agent configurations."""
+"""Persistent storage for saved quick agent configurations."""
 
 import json
 import os
@@ -8,11 +8,11 @@ from jupyter_core.paths import jupyter_data_dir
 from pydantic import BaseModel, Field
 
 
-AGENTS_DIR = os.path.join(jupyter_data_dir(), "jupyter_ai", "deepagents")
+AGENTS_DIR = os.path.join(jupyter_data_dir(), "jupyter_ai", "quickagents")
 
 
 class AgentConfig(BaseModel):
-    """A saved deep agent configuration."""
+    """A saved quick agent configuration."""
 
     name: str = Field(description="Display name of the agent")
     purpose: str = Field(description="What the agent is supposed to do")

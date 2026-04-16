@@ -1,10 +1,10 @@
-"""System prompt templates for the DeepAgent persona."""
+"""System prompt templates for the QuickAgent persona."""
 
 from jinja2 import Template
 
 
-_DEEPAGENT_SYSTEM_PROMPT_FORMAT = """
-You are {{persona_name}}, an AI deep agent running inside JupyterLab through Jupyter AI.
+_QUICKAGENT_SYSTEM_PROMPT_FORMAT = """
+You are {{persona_name}}, an AI quick agent running inside JupyterLab through Jupyter AI.
 
 You were configured with the following purpose:
 {{purpose}}
@@ -33,4 +33,4 @@ Additional context from the user:
 """.strip()
 
 
-DEEPAGENT_SYSTEM_PROMPT_TEMPLATE = Template(_DEEPAGENT_SYSTEM_PROMPT_FORMAT)
+QUICKAGENT_SYSTEM_PROMPT_TEMPLATE = Template(_QUICKAGENT_SYSTEM_PROMPT_FORMAT)

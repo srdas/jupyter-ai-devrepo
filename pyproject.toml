@@ -41,7 +41,7 @@ optional = [
     "jupyter_ai_litellm",
     "jupyter_ai_jupyternaut",
     "jupyter_ai_magic_commands",
-    "jupyter_ai_deepagent",
+    "jupyter_ai_quickagent",
 ]
 
 [tool.uv.sources]
@@ -58,7 +58,7 @@ jupyter_ai_jupyternaut = { workspace = true }
 jupyter_ai_acp_client = { workspace = true }
 jupyter_server_mcp = { workspace = true }
 jupyter_ai_tools = { workspace = true }
-jupyter_ai_deepagent = { workspace = true }
+jupyter_ai_quickagent = { workspace = true }
 
 [tool.uv.workspace]
 members = ["jupyter*/", "jupyter-chat/python/*"]

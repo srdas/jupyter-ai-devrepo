@@ -1,4 +1,4 @@
-"""DeepAgent persona for Jupyter AI using LangChain Deep Agents."""
+"""QuickAgent persona for Jupyter AI using LangChain Deep Agents."""
 
 import os
 from typing import Any, Optional
@@ -15,11 +15,11 @@ from .agent_store import (
     load_agent,
     save_agent,
 )
-from .prompt_template import DEEPAGENT_SYSTEM_PROMPT_TEMPLATE
+from .prompt_template import QUICKAGENT_SYSTEM_PROMPT_TEMPLATE
 
-DEEPAGENT_AVATAR_PATH = str(
+QUICKAGENT_AVATAR_PATH = str(
     os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "static", "deepagent.svg")
+        os.path.join(os.path.dirname(__file__), "static", "quickagent.svg")
     )
 )
 
@@ -32,7 +32,7 @@ STATE_ASK_SEARCH = "ask_search"
 STATE_CONFIRM = "confirm"
 
 
-class DeepAgentPersona(BasePersona):
+class QuickAgentPersona(BasePersona):
     """
     A Jupyter AI persona that creates and runs LangChain Deep Agents.
 
@@ -53,17 +53,17 @@ class DeepAgentPersona(BasePersona):
     @property
     def defaults(self):
         return PersonaDefaults(
-            name="DeepAgent",
-            avatar_path=DEEPAGENT_AVATAR_PATH,
+            name="QuickAgent",
+            avatar_path=QUICKAGENT_AVATAR_PATH,
             description=(
-                "An interactive deep agent builder powered by LangChain Deep Agents. "
+                "An interactive quick agent builder powered by LangChain Deep Agents. "
                 "Create, configure, save, and run autonomous agents with tools and search."
             ),
-            system_prompt="You are DeepAgent, an AI agent builder for JupyterLab.",
+            system_prompt="You are QuickAgent, an AI agent builder for JupyterLab.",
         )
 
     def _strip_mention(self, body: str) -> str:
-        """Strip @DeepAgent (or any @mention of this persona) from the message body."""
+        """Strip @QuickAgent (or any @mention of this persona) from the message body."""
         import re
         # Remove @-mentions that match this persona's name (case-insensitive)
         cleaned = re.sub(r"@\S+\s*", "", body, count=1).strip()
@@ -138,8 +138,8 @@ class DeepAgentPersona(BasePersona):
                 agent_list += f"- `{a.name}` — {a.purpose}\n"
 
         self.send_message(
-            "**DeepAgent** — Build and run autonomous agents in JupyterLab\n\n"
-            "**Commands** (send as a message to @DeepAgent):\n"
+            "**QuickAgent** — Build and run autonomous agents in JupyterLab\n\n"
+            "**Commands** (send as a message to @QuickAgent):\n"
             "- `create` — Interactively create a new agent\n"
             "- `list` — List all saved agents\n"
             "- `use <name>` — Activate a saved agent for conversation\n"
@@ -148,7 +148,7 @@ class DeepAgentPersona(BasePersona):
             "- `delete <name>` — Delete a saved agent\n"
             "- `help` — Show this help message\n"
             f"{agent_list}\n"
-            "To get started, send `@DeepAgent create` to build your first agent!"
+            "To get started, send `@QuickAgent create` to build your first agent!"
         )
 
     async def _list_agents(self) -> None:
@@ -159,7 +159,7 @@ class DeepAgentPersona(BasePersona):
             )
             return
 
-        lines = ["**Saved Deep Agents:**\n"]
+        lines = ["**Saved Quick Agents:**\n"]
         for a in agents:
             tools = ", ".join(a.tools) if a.tools else "none"
             search = ", ".join(a.search_tools) if a.search_tools else "none"
@@ -206,7 +206,7 @@ class DeepAgentPersona(BasePersona):
         self._setup_state = STATE_ASK_NAME
         self._pending_config = {}
         self.send_message(
-            "**Let's create a new Deep Agent!**\n\n"
+            "**Let's create a new Quick Agent!**\n\n"
             "**Step 1/4:** What would you like to name your agent?\n\n"
             "*(e.g., `Research Assistant`, `Code Reviewer`, `Data Analyst`)*"
         )
@@ -288,7 +288,7 @@ class DeepAgentPersona(BasePersona):
                     f"**Agent `{config.name}` saved and activated!**\n\n"
                     f"Saved to: `{path}`\n\n"
                     f"You can now send messages and I'll process them with this agent.\n\n"
-                    f"You can also invoke it later with `@DeepAgent use {config.name}`."
+                    f"You can also invoke it later with `@QuickAgent use {config.name}`."
                 )
             else:
                 self._setup_state = STATE_IDLE
@@ -393,7 +393,7 @@ class DeepAgentPersona(BasePersona):
                 context = self.process_attachments(message) or ""
                 context = f"User's username is '{message.sender}'\n\n" + context
 
-            system_prompt = DEEPAGENT_SYSTEM_PROMPT_TEMPLATE.render(
+            system_prompt = QUICKAGENT_SYSTEM_PROMPT_TEMPLATE.render(
                 persona_name=config.name,
                 purpose=config.purpose,
                 context=context,
@@ -420,7 +420,7 @@ class DeepAgentPersona(BasePersona):
                 f"**Missing dependency:** {e}\n\n"
                 "Please install the required packages:\n"
                 "```bash\n"
-                "pip install deepagents jupyter_ai_jupyternaut\n"
+                "pip install deepagents jupyter_ai_quickagent\n"
                 "```"
             )
         except Exception as e:

@@ -1,4 +1,4 @@
-# jupyter-ai-deepagent
+# jupyter-ai-quickagent
 
 A Jupyter AI persona that implements [LangChain Deep Agents](https://github.com/langchain-ai/deepagents) with an interactive agent configuration flow.
 
@@ -9,11 +9,11 @@ A Jupyter AI persona that implements [LangChain Deep Agents](https://github.com/
 - **Persistent agents** — saved to disk and reusable across sessions
 - **Built-in tools** — file I/O, shell execution, Python REPL, planning (provided by the Deep Agents framework)
 - **Search integration** — DuckDuckGo (built-in, no API key), plus optional Tavily, Wikipedia, arXiv, PubMed
-- **Chat commands** — `@DeepAgent create`, `@DeepAgent list`, `@DeepAgent use <name>`, etc.
+- **Chat commands** — `@QuickAgent create`, `@QuickAgent list`, `@QuickAgent use <name>`, etc.
 
 ## Prerequisites
 
-- **Jupyternaut** (`jupyter_ai_jupyternaut`) must be installed and a chat model must be configured in **Settings > AI Settings**. DeepAgent reuses this model — no environment-variable API keys are needed for the LLM itself.
+- **Jupyternaut** (`jupyter_ai_jupyternaut`) must be installed and a chat model must be configured in **Settings > AI Settings**. QuickAgent reuses this model — no environment-variable API keys are needed for the LLM itself.
 - **Python >= 3.11**
 
 ## Installation
@@ -29,7 +29,7 @@ just sync          # or: uv sync --extra optional
 ### Standalone
 
 ```bash
-pip install jupyter_ai_deepagent
+pip install jupyter_ai_quickagent
 ```
 
 ## Quick Start
@@ -37,19 +37,19 @@ pip install jupyter_ai_deepagent
 1. Ensure a chat model is configured in **Settings > AI Settings** (the same one Jupyternaut uses).
 2. Start JupyterLab: `just start`
 3. Open the Jupyter AI chat panel from the left sidebar.
-4. Send `@DeepAgent create` to build your first agent.
+4. Send `@QuickAgent create` to build your first agent.
 5. Follow the four interactive prompts (name, purpose, tools, search tools).
 
 See [USAGE.md](USAGE.md) for the full walkthrough and command reference.
 
 ## How Authentication Works
 
-DeepAgent does **not** manage its own API keys. Instead, it reads the model ID and credentials from Jupyternaut's `ConfigManager`, which is populated through the **Settings > AI Settings** UI. Under the hood this uses [LiteLLM](https://docs.litellm.ai/), so any provider supported there (OpenAI, Anthropic, Azure, Google, AWS Bedrock, etc.) works automatically.
+QuickAgent does **not** manage its own API keys. Instead, it reads the model ID and credentials from Jupyternaut's `ConfigManager`, which is populated through the **Settings > AI Settings** UI. Under the hood this uses [LiteLLM](https://docs.litellm.ai/), so any provider supported there (OpenAI, Anthropic, Azure, Google, AWS Bedrock, etc.) works automatically.
 
 ## Development
 
 ```bash
-cd jupyter-ai-deepagent
+cd jupyter-ai-quickagent
 just pytest     # run tests
 just lint       # run linters
 ```
@@ -63,7 +63,7 @@ optional = [
     "jupyter_ai_litellm",
     "jupyter_ai_jupyternaut",
     "jupyter_ai_magic_commands",
-    "jupyter_ai_deepagent",
+    "jupyter_ai_quickagent",
 ]
 
 [tool.uv.sources]
@@ -80,4 +80,4 @@ jupyter_ai_jupyternaut = { workspace = true }
 jupyter_ai_acp_client = { workspace = true }
 jupyter_server_mcp = { workspace = true }
 jupyter_ai_tools = { workspace = true }
-jupyter_ai_deepagent = { workspace = true }
+jupyter_ai_quickagent = { workspace = true }
