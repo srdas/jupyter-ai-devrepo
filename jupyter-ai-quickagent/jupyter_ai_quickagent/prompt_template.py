@@ -31,6 +31,13 @@ Skills and specialized instructions:
 {{skills}}
 {% endif %}
 
+{% if skills_dir %}
+The skills directory is located at: {{skills_dir}}
+Files referenced in skill instructions can be found relative to the parent directory: {{skills_dir_parent}}
+When asked to read a file, use absolute paths (e.g. {{skills_dir_parent}}/filename.md).
+Your home directory is: {{home_dir}}
+{% endif %}
+
 {% if context %}
 Additional context from the user:
 {{context}}

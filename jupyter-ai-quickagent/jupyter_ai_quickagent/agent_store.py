@@ -37,6 +37,7 @@ COMMON_TOOLS = {
     "glob": "Find files matching a pattern",
     "grep": "Search file contents with regex",
     "python_repl": "Execute Python code in a REPL",
+    "web_fetch": "Fetch and read content from a URL",
     "todo": "Create and manage a task/todo list",
 }
 

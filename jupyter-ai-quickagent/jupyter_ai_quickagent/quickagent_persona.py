@@ -408,6 +408,32 @@ class QuickAgentPersona(BasePersona):
         expanded = os.path.expanduser(path)
         return os.path.abspath(expanded)
 
+    def _find_project_root(self, skills_dir: str) -> str:
+        """Walk up from the skills directory to find the project root.
+
+        Looks for a directory containing .claude, .git, or pyproject.toml.
+        Falls back to the parent of .claude if found in the path.
+        """
+        path = os.path.abspath(skills_dir)
+        # If .claude is in the path, the project root is its parent
+        parts = path.split(os.sep)
+        if ".claude" in parts:
+            idx = parts.index(".claude")
+            return os.sep.join(parts[:idx])
+        # Otherwise walk up looking for project markers
+        current = path
+        for _ in range(10):
+            parent = os.path.dirname(current)
+            if parent == current:
+                break
+            if any(
+                os.path.exists(os.path.join(parent, marker))
+                for marker in (".git", ".claude", "pyproject.toml", "package.json")
+            ):
+                return parent
+            current = parent
+        return os.path.dirname(skills_dir)
+
     def _load_skill_content(self, skills_dir: str) -> tuple[str, list[str]]:
         """Load all .md files from the skills directory, recursively.
 
@@ -527,11 +553,17 @@ class QuickAgentPersona(BasePersona):
                 skills_list = ", ".join(f"`{s}`" for s in display_skills)
                 self.send_message(f"**Using skills:** {skills_list}")
 
+            skills_dir = config.skills_dir
+            skills_dir_parent = self._find_project_root(skills_dir) if skills_dir else ""
+
             system_prompt = QUICKAGENT_SYSTEM_PROMPT_TEMPLATE.render(
                 persona_name=config.name,
                 purpose=config.purpose,
                 context=context,
                 skills=skill_content,
+                skills_dir=skills_dir,
+                skills_dir_parent=skills_dir_parent,
+                home_dir=os.path.expanduser("~"),
             )
 
             agent = self._build_agent(config, model, system_prompt)
@@ -565,20 +597,35 @@ class QuickAgentPersona(BasePersona):
 
     def _build_agent(self, config: AgentConfig, model, system_prompt: str):
         """Build a deep agent from a saved configuration, using the provided LLM."""
+        from pathlib import Path
+
         from deepagents import create_deep_agent
+        from deepagents.backends import LocalShellBackend
 
         tools = self._resolve_tools(config)
+
+        backend = LocalShellBackend(
+            root_dir=Path.home(),
+            virtual_mode=False,
+        )
 
         agent = create_deep_agent(
             model=model,
             tools=tools,
             system_prompt=system_prompt,
+            backend=backend,
         )
         return agent
 
     def _resolve_tools(self, config: AgentConfig) -> list:
         """Resolve tool names to actual LangChain tool objects."""
         tools = []
+
+        # Common tools (most are built-in to deepagents; we only add custom ones)
+        for tool_name in config.tools:
+            tool = self._get_common_tool(tool_name)
+            if tool:
+                tools.append(tool)
 
         # Search tools
         for tool_name in config.search_tools:
@@ -587,6 +634,64 @@ class QuickAgentPersona(BasePersona):
                 tools.append(tool)
 
         return tools
+
+    def _get_common_tool(self, name: str):
+        """Get a common tool by name. Returns None for tools provided by deepagents natively."""
+        try:
+            if name == "web_fetch":
+                return self._make_web_fetch_tool()
+        except Exception as e:
+            self.log.warning(f"Common tool '{name}' failed to initialize: {e}")
+        return None
+
+    def _make_web_fetch_tool(self):
+        """Create a web_fetch tool that fetches content from a URL."""
+        from langchain_core.tools import tool
+
+        @tool
+        def web_fetch(url: str) -> str:
+            """Fetch and return the text content of a web page at the given URL."""
+            import httpx
+            from html.parser import HTMLParser
+
+            class _TextExtractor(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self._pieces: list[str] = []
+                    self._skip = False
+
+                def handle_starttag(self, tag, attrs):
+                    if tag in ("script", "style", "noscript"):
+                        self._skip = True
+
+                def handle_endtag(self, tag):
+                    if tag in ("script", "style", "noscript"):
+                        self._skip = False
+
+                def handle_data(self, data):
+                    if not self._skip:
+                        text = data.strip()
+                        if text:
+                            self._pieces.append(text)
+
+                def get_text(self) -> str:
+                    return "\n".join(self._pieces)
+
+            try:
+                resp = httpx.get(url, follow_redirects=True, timeout=30)
+                resp.raise_for_status()
+            except httpx.HTTPError as e:
+                return f"Error fetching URL: {e}"
+
+            content_type = resp.headers.get("content-type", "")
+            if "html" in content_type:
+                extractor = _TextExtractor()
+                extractor.feed(resp.text)
+                return extractor.get_text()[:50000]
+            else:
+                return resp.text[:50000]
+
+        return web_fetch
 
     def _get_search_tool(self, name: str):
         """Get a search tool by name, returning None if unavailable."""
