@@ -26,6 +26,11 @@ Guidelines:
 - Always validate your work by reading back files you've written
 - Report progress and results clearly
 
+{% if skills %}
+Skills and specialized instructions:
+{{skills}}
+{% endif %}
+
 {% if context %}
 Additional context from the user:
 {{context}}

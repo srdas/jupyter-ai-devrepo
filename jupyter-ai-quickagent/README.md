@@ -4,11 +4,12 @@ A Jupyter AI persona that implements [LangChain Deep Agents](https://github.com/
 
 ## Features
 
-- **Interactive agent builder** — step-by-step setup via chat (name, purpose, tools, search)
+- **Interactive agent builder** — step-by-step setup via chat (name, purpose, tools, search, skill files)
 - **Shared LLM authentication** — automatically uses the model and credentials configured in Jupyter AI's **Settings > AI Settings** (via LiteLLM), so there is no separate API key setup
 - **Persistent agents** — saved to disk and reusable across sessions
 - **Built-in tools** — file I/O, shell execution, Python REPL, planning (provided by the Deep Agents framework)
 - **Search integration** — DuckDuckGo (built-in, no API key), plus optional Tavily, Wikipedia, arXiv, PubMed
+- **Skills directory** — point to a folder of `.md` files with specialized instructions, domain knowledge, or workflows (same as Claude's `--add-dir`)
 - **Chat commands** — `@QuickAgent create`, `@QuickAgent list`, `@QuickAgent use <name>`, etc.
 
 ## Prerequisites
@@ -38,7 +39,7 @@ pip install jupyter_ai_quickagent
 2. Start JupyterLab: `just start`
 3. Open the Jupyter AI chat panel from the left sidebar.
 4. Send `@QuickAgent create` to build your first agent.
-5. Follow the four interactive prompts (name, purpose, tools, search tools).
+5. Follow the five interactive prompts (name, purpose, tools, search tools, skill files).
 
 See [USAGE.md](USAGE.md) for the full walkthrough and command reference.
 

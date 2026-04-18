@@ -3,5 +3,6 @@
   "purpose": "Research topics on the web, synthesize findings from multiple sources, and write comprehensive summaries with citations",
   "tools": ["execute", "read_file", "write_file", "edit_file", "ls", "grep", "todo"],
   "search_tools": ["tavily_search", "wikipedia", "arxiv"],
+  "skills_dir": "",
   "system_prompt": ""
 }

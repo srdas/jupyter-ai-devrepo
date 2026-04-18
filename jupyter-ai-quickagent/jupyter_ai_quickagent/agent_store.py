@@ -20,6 +20,10 @@ class AgentConfig(BaseModel):
     search_tools: list[str] = Field(
         default_factory=list, description="Selected search tool names"
     )
+    skills_dir: str = Field(
+        default="",
+        description="Path to a directory containing skill (.md) files for the agent",
+    )
     system_prompt: str = Field(default="", description="Custom system prompt override")
 
 
@@ -43,6 +47,11 @@ SEARCH_TOOLS = {
     "wikipedia": "Search and retrieve Wikipedia articles",
     "arxiv": "Search academic papers on arXiv",
     "pubmed": "Search biomedical literature on PubMed",
+}
+
+# Maps search tool names to their required environment variable (if any)
+SEARCH_TOOL_API_KEYS = {
+    "tavily_search": "TAVILY_API_KEY",
 }
 
 

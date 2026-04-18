@@ -8,6 +8,7 @@ from jupyterlab_chat.models import Message
 
 from .agent_store import (
     COMMON_TOOLS,
+    SEARCH_TOOL_API_KEYS,
     SEARCH_TOOLS,
     AgentConfig,
     delete_agent,
@@ -29,6 +30,8 @@ STATE_ASK_NAME = "ask_name"
 STATE_ASK_PURPOSE = "ask_purpose"
 STATE_ASK_TOOLS = "ask_tools"
 STATE_ASK_SEARCH = "ask_search"
+STATE_ASK_API_KEY = "ask_api_key"
+STATE_ASK_SKILLS = "ask_skills"
 STATE_CONFIRM = "confirm"
 
 
@@ -72,15 +75,15 @@ class QuickAgentPersona(BasePersona):
     async def process_message(self, message: Message) -> None:
         body = self._strip_mention(message.body.strip())
 
+        # If in interactive setup flow, continue it (takes priority over commands)
+        if self._setup_state != STATE_IDLE:
+            await self._handle_setup_step(body)
+            return
+
         # Handle commands (e.g. "create", "list", "use MyAgent")
         first_word = body.split()[0].lower() if body else ""
         if first_word in ("create", "list", "use", "delete", "info", "run", "help"):
             await self._handle_command(body)
-            return
-
-        # If in interactive setup flow, continue it
-        if self._setup_state != STATE_IDLE:
-            await self._handle_setup_step(body)
             return
 
         # If there's an active agent, run the message through it
@@ -163,12 +166,14 @@ class QuickAgentPersona(BasePersona):
         for a in agents:
             tools = ", ".join(a.tools) if a.tools else "none"
             search = ", ".join(a.search_tools) if a.search_tools else "none"
+            skills = a.skills_dir if a.skills_dir else "none"
             active = " *(active)*" if a.name == self._active_agent_name else ""
             lines.append(
                 f"### {a.name}{active}\n"
                 f"- **Purpose:** {a.purpose}\n"
                 f"- **Tools:** {tools}\n"
                 f"- **Search:** {search}\n"
+                f"- **Skills dir:** {skills}\n"
             )
         self.send_message("\n".join(lines))
 
@@ -186,6 +191,7 @@ class QuickAgentPersona(BasePersona):
             f"  - `{t}`: {SEARCH_TOOLS.get(t, 'custom')}"
             for t in config.search_tools
         )
+        skills_display = config.skills_dir if config.skills_dir else "none"
 
         # Show the model from jupyternaut AI settings
         cm = self._get_config_manager()
@@ -197,6 +203,7 @@ class QuickAgentPersona(BasePersona):
             f"**Model (from AI Settings):** `{model_display}`\n\n"
             f"**Tools:**\n{tools_desc or '  none'}\n\n"
             f"**Search tools:**\n{search_desc or '  none'}\n\n"
+            f"**Skills directory:** `{skills_display}`\n\n"
             f"Say `use {config.name}` to activate this agent."
         )
 
@@ -207,7 +214,7 @@ class QuickAgentPersona(BasePersona):
         self._pending_config = {}
         self.send_message(
             "**Let's create a new Quick Agent!**\n\n"
-            "**Step 1/4:** What would you like to name your agent?\n\n"
+            "**Step 1/5:** What would you like to name your agent?\n\n"
             "*(e.g., `Research Assistant`, `Code Reviewer`, `Data Analyst`)*"
         )
 
@@ -217,7 +224,7 @@ class QuickAgentPersona(BasePersona):
             self._setup_state = STATE_ASK_PURPOSE
             self.send_message(
                 f"Great! Your agent will be called **{body}**.\n\n"
-                "**Step 2/4:** What should this agent do? Describe its purpose.\n\n"
+                "**Step 2/5:** What should this agent do? Describe its purpose.\n\n"
                 "*(e.g., `Research topics on the web and write comprehensive summaries`, "
                 "`Review Python code for bugs and suggest improvements`, "
                 "`Analyze CSV data files and create visualizations`)*"
@@ -232,7 +239,7 @@ class QuickAgentPersona(BasePersona):
                 for i, (name, desc) in enumerate(COMMON_TOOLS.items())
             )
             self.send_message(
-                "**Step 3/4:** Which tools should your agent have?\n\n"
+                "**Step 3/5:** Which tools should your agent have?\n\n"
                 f"**Available tools:**\n{tools_list}\n\n"
                 "Enter the tool names separated by commas, or type:\n"
                 "- `all` for all tools\n"
@@ -251,7 +258,7 @@ class QuickAgentPersona(BasePersona):
                 for i, (name, desc) in enumerate(SEARCH_TOOLS.items())
             )
             self.send_message(
-                "**Step 4/4:** Which search tools should your agent use?\n\n"
+                "**Step 4/5:** Which search tools should your agent use?\n\n"
                 f"**Available search tools:**\n{search_list}\n\n"
                 "Enter the tool names separated by commas, or type:\n"
                 "- `all` for all search tools\n"
@@ -262,24 +269,81 @@ class QuickAgentPersona(BasePersona):
         elif self._setup_state == STATE_ASK_SEARCH:
             search_tools = self._parse_tool_selection(body, SEARCH_TOOLS)
             self._pending_config["search_tools"] = search_tools
+
+            # Check for missing API keys
+            missing_keys = self._get_missing_api_keys(search_tools)
+            if missing_keys:
+                self._pending_config["_missing_keys"] = list(missing_keys.items())
+                self._setup_state = STATE_ASK_API_KEY
+                env_var, tool_name = self._pending_config["_missing_keys"][0]
+                self.send_message(
+                    f"**API key required:** The `{tool_name}` tool needs "
+                    f"the `{env_var}` environment variable.\n\n"
+                    f"Please enter your `{env_var}` value, or type `skip` to "
+                    f"remove this tool from the agent."
+                )
+            else:
+                self._setup_state = STATE_ASK_SKILLS
+                self._prompt_skills_dir()
+
+        elif self._setup_state == STATE_ASK_API_KEY:
+            missing_keys = self._pending_config.get("_missing_keys", [])
+            if not missing_keys:
+                self._setup_state = STATE_ASK_SKILLS
+                self._prompt_skills_dir()
+                return
+
+            env_var, tool_name = missing_keys[0]
+            if body.strip().lower() == "skip":
+                # Remove this tool from the selection
+                self._pending_config["search_tools"] = [
+                    t for t in self._pending_config["search_tools"] if t != tool_name
+                ]
+                self.send_message(f"Removed `{tool_name}` from agent tools.")
+            else:
+                os.environ[env_var] = body.strip()
+                self.send_message(f"`{env_var}` set for this session.")
+
+            missing_keys.pop(0)
+            if missing_keys:
+                self._pending_config["_missing_keys"] = missing_keys
+                env_var, tool_name = missing_keys[0]
+                self.send_message(
+                    f"**API key required:** The `{tool_name}` tool needs "
+                    f"the `{env_var}` environment variable.\n\n"
+                    f"Please enter your `{env_var}` value, or type `skip` to "
+                    f"remove this tool from the agent."
+                )
+            else:
+                self._pending_config.pop("_missing_keys", None)
+                self._setup_state = STATE_ASK_SKILLS
+                self._prompt_skills_dir()
+
+        elif self._setup_state == STATE_ASK_SKILLS:
+            skills_dir = self._parse_skills_dir(body)
+            self._pending_config["skills_dir"] = skills_dir
             self._setup_state = STATE_CONFIRM
 
-            config = AgentConfig(**self._pending_config)
+            config_data = {k: v for k, v in self._pending_config.items() if not k.startswith("_")}
+            config = AgentConfig(**config_data)
             tools_str = ", ".join(config.tools) if config.tools else "none"
             search_str = ", ".join(config.search_tools) if config.search_tools else "none"
+            skills_str = config.skills_dir if config.skills_dir else "none"
 
             self.send_message(
                 "**Review your agent configuration:**\n\n"
                 f"- **Name:** {config.name}\n"
                 f"- **Purpose:** {config.purpose}\n"
                 f"- **Tools:** {tools_str}\n"
-                f"- **Search tools:** {search_str}\n\n"
+                f"- **Search tools:** {search_str}\n"
+                f"- **Skills directory:** {skills_str}\n\n"
                 "Type `yes` to save, or `no` to cancel."
             )
 
         elif self._setup_state == STATE_CONFIRM:
             if body.lower() in ("yes", "y", "save", "ok"):
-                config = AgentConfig(**self._pending_config)
+                config_data = {k: v for k, v in self._pending_config.items() if not k.startswith("_")}
+                config = AgentConfig(**config_data)
                 path = save_agent(config)
                 self._active_agent_name = config.name
                 self._setup_state = STATE_IDLE
@@ -312,6 +376,63 @@ class QuickAgentPersona(BasePersona):
             if name in available:
                 selected.append(name)
         return selected
+
+    def _get_missing_api_keys(self, search_tools: list[str]) -> dict[str, str]:
+        """Return {env_var: tool_name} for tools that need an API key not currently set."""
+        missing = {}
+        for tool_name in search_tools:
+            env_var = SEARCH_TOOL_API_KEYS.get(tool_name)
+            if env_var and not os.environ.get(env_var):
+                missing[env_var] = tool_name
+        return missing
+
+    def _prompt_skills_dir(self) -> None:
+        """Send the skills directory prompt message."""
+        self.send_message(
+            "**Step 5/5:** Do you have a **skills directory** for this agent?\n\n"
+            "A skills directory contains `.md` files with specialized instructions, "
+            "domain knowledge, or workflows that the agent should follow. "
+            "All `.md` files in the directory will be loaded into the agent's context.\n\n"
+            "Enter the directory path, or type `none` to skip.\n\n"
+            "*(Use `~` for your home directory, e.g. `~/skills` or `~/projects/my-skills`)*\n\n"
+            "**Note:** Avoid starting with `/` — use `~` or a relative path instead."
+        )
+
+    def _parse_skills_dir(self, body: str) -> str:
+        """Parse a skills directory path from user input."""
+        lower = body.strip().lower()
+        if lower in ("none", "skip", ""):
+            return ""
+
+        path = body.strip()
+        expanded = os.path.expanduser(path)
+        return os.path.abspath(expanded)
+
+    def _load_skill_content(self, skills_dir: str) -> tuple[str, list[str]]:
+        """Load all .md files from the skills directory, recursively.
+
+        Returns a tuple of (concatenated content, list of relative paths loaded).
+        """
+        if not skills_dir or not os.path.isdir(skills_dir):
+            return "", []
+
+        sections = []
+        loaded_paths = []
+        for dirpath, _, filenames in os.walk(skills_dir):
+            for filename in sorted(filenames):
+                if filename.endswith(".md"):
+                    filepath = os.path.join(dirpath, filename)
+                    rel_path = os.path.relpath(filepath, skills_dir)
+                    try:
+                        with open(filepath) as f:
+                            content = f.read()
+                        sections.append(
+                            f"--- Skill: {rel_path} ---\n{content}"
+                        )
+                        loaded_paths.append(rel_path)
+                    except OSError:
+                        pass
+        return "\n\n".join(sections), loaded_paths
 
     # ---- LLM from jupyternaut config ----
 
@@ -387,23 +508,38 @@ class QuickAgentPersona(BasePersona):
 
         try:
             model = self._get_chat_model()
-            agent = self._build_agent(config, model)
+
             context = ""
             if message:
                 context = self.process_attachments(message) or ""
                 context = f"User's username is '{message.sender}'\n\n" + context
 
+            skill_content = ""
+            skill_names: list[str] = []
+            if config.skills_dir:
+                skill_content, skill_names = self._load_skill_content(config.skills_dir)
+
+            display_skills = [
+                s for s in skill_names
+                if "skills" in os.path.join(config.skills_dir, s).split(os.sep)
+            ]
+            if display_skills:
+                skills_list = ", ".join(f"`{s}`" for s in display_skills)
+                self.send_message(f"**Using skills:** {skills_list}")
+
             system_prompt = QUICKAGENT_SYSTEM_PROMPT_TEMPLATE.render(
                 persona_name=config.name,
                 purpose=config.purpose,
                 context=context,
+                skills=skill_content,
             )
+
+            agent = self._build_agent(config, model, system_prompt)
 
             # Run the deep agent and stream the response
             async def create_aiter():
                 async for token, metadata in agent.astream(
                     {"messages": [{"role": "user", "content": user_message}]},
-                    {"configurable": {"system_prompt": system_prompt}},
                     stream_mode="messages",
                 ):
                     node = metadata.get("langgraph_node", "")
@@ -427,7 +563,7 @@ class QuickAgentPersona(BasePersona):
             self.log.exception("Error running deep agent.")
             self.send_message(f"**Error running agent:** {e}")
 
-    def _build_agent(self, config: AgentConfig, model):
+    def _build_agent(self, config: AgentConfig, model, system_prompt: str):
         """Build a deep agent from a saved configuration, using the provided LLM."""
         from deepagents import create_deep_agent
 
@@ -436,6 +572,7 @@ class QuickAgentPersona(BasePersona):
         agent = create_deep_agent(
             model=model,
             tools=tools,
+            system_prompt=system_prompt,
         )
         return agent
 

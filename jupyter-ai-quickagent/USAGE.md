@@ -86,7 +86,30 @@ Available search tools:
 @QuickAgent duckduckgo_search, wikipedia
 ```
 
-#### Step 5 — Confirm
+#### Step 5 — Skills Directory
+> QuickAgent: Do you have a skills directory for this agent?
+
+A skills directory is a folder containing `.md` files with specialized instructions, domain knowledge, or workflows that the agent should follow. All `.md` files in the directory are loaded into the agent's system prompt at runtime.
+
+This is the same folder you would pass with the `--add-dir` option when starting Claude Code.
+
+Enter a directory path or `none` to skip:
+
+```
+@QuickAgent ~/skills
+```
+
+**Important:** Use `~` for your home directory (e.g., `~/skills`). Avoid starting with `/` as it may be intercepted as a slash command by the Jupyter AI router.
+
+**What makes a good skills directory?**
+
+Place `.md` files in the directory covering:
+- Domain-specific instructions (e.g., `coding_standards.md`, `review_checklist.md`)
+- Workflow descriptions (e.g., `data_analysis_procedure.md`)
+- Reference material (e.g., `api_docs.md`, `style_guide.md`)
+- Persona instructions (e.g., `response_format.md`)
+
+#### Step 6 — Confirm
 > QuickAgent: Review your configuration... Type `yes` to save.
 
 ```
@@ -141,21 +164,25 @@ Under the hood, this uses [LiteLLM](https://docs.litellm.ai/) via the `ChatLiteL
 - **Purpose:** Research topics and write summaries
 - **Tools:** `execute, read_file, write_file, edit_file, ls, grep, todo`
 - **Search:** `duckduckgo_search, wikipedia, arxiv`
+- **Skills dir:** none
 
 ### Code Reviewer
 - **Purpose:** Review code for bugs, style issues, and security vulnerabilities
 - **Tools:** `read_file, ls, glob, grep`
 - **Search:** none
+- **Skills dir:** `~/skills/code-review`
 
 ### Data Analyst
 - **Purpose:** Analyze CSV/JSON data files and create visualizations
 - **Tools:** `execute, read_file, write_file, python_repl, ls, glob`
 - **Search:** none
+- **Skills dir:** `~/skills/data-analysis`
 
 ### Full Stack Developer
 - **Purpose:** Build and modify web applications with frontend and backend
 - **Tools:** `all`
 - **Search:** `duckduckgo_search`
+- **Skills dir:** `~/skills/fullstack`
 
 A sample agent config is included at `jupyter_ai_quickagent/examples/research_agent.json`.
 
@@ -173,11 +200,12 @@ Each agent is a single `.json` file (e.g., `research_assistant.json`) containing
   "purpose": "Research topics on the web and write summaries",
   "tools": ["execute", "read_file", "write_file"],
   "search_tools": ["duckduckgo_search", "wikipedia"],
+  "skills_dir": "/Users/you/skills",
   "system_prompt": ""
 }
 ```
 
-You can edit these files manually if needed. The `system_prompt` field is reserved for future use.
+You can edit these files manually if needed. The `system_prompt` field is reserved for future use. The `skills_dir` field is the absolute path to a directory; all `.md` files in it are loaded at runtime and injected into the agent's system prompt.
 
 ## Troubleshooting
 
