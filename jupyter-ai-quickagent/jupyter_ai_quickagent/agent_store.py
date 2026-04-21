@@ -2,13 +2,13 @@
 
 import json
 import os
+from pathlib import Path
 from typing import Optional
 
-from jupyter_core.paths import jupyter_data_dir
 from pydantic import BaseModel, Field
 
 
-AGENTS_DIR = os.path.join(jupyter_data_dir(), "jupyter_ai", "quickagents")
+AGENTS_DIR = str(Path.home() / ".jupyter" / "jupyter-ai" / "quickagents")
 
 
 class AgentConfig(BaseModel):

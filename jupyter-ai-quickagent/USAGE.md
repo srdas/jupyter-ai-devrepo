@@ -190,7 +190,7 @@ A sample agent config is included at `jupyter_ai_quickagent/examples/research_ag
 
 Agent configurations are saved as JSON files in:
 ```
-~/.local/share/jupyter/jupyter_ai/quickagents/
+~/.jupyter/jupyter-ai/quickagents/
 ```
 
 Each agent is a single `.json` file (e.g., `research_assistant.json`) containing:
